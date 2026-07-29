@@ -1,22 +1,22 @@
 """
 BIST AI LAB OMEGA
-Explain Engine v0.1
+Explain Engine v2.0 PRO
 
-Explainable AI intelligence layer.
+Explainable AI layer.
 
 Responsibilities:
 
-- Explain AI decisions
-- Identify strongest factors
-- Identify risks
-- Generate human readable reasoning
-- Dashboard compatible explanation
+- Convert AI scores into human explanation
+- Generate decision summary
+- Detect strengths
+- Detect weaknesses
+- Create risk message
 
 Compatible with:
 
 - Fusion Engine
 - Confidence Engine
-- Decision Brain
+- AI Orchestrator
 - Dashboard
 """
 
@@ -24,6 +24,7 @@ from __future__ import annotations
 
 
 from datetime import datetime
+
 
 from typing import Dict, Any, List
 
@@ -33,14 +34,13 @@ from typing import Dict, Any, List
 class ExplainEngine:
 
 
-    def __init__(self):
+
+    def __init__(
+        self
+    ):
 
 
-        self.version = (
-
-            "0.1.0"
-
-        )
+        self.version = "2.0.0"
 
 
 
@@ -51,8 +51,22 @@ class ExplainEngine:
 
     def explain(
         self,
-        intelligence: Dict[str,Any]
+        intelligence
     ):
+
+
+        if not isinstance(
+
+            intelligence,
+
+            dict
+
+        ):
+
+
+            return self.default()
+
+
 
 
         score = float(
@@ -68,6 +82,7 @@ class ExplainEngine:
         )
 
 
+
         signal = intelligence.get(
 
             "signal",
@@ -75,6 +90,7 @@ class ExplainEngine:
             "HOLD"
 
         )
+
 
 
         scores = intelligence.get(
@@ -87,14 +103,7 @@ class ExplainEngine:
 
 
 
-        strengths = self.find_strengths(
-
-            scores
-
-        )
-
-
-        weaknesses = self.find_weaknesses(
+        strengths = self.detect_strengths(
 
             scores
 
@@ -102,7 +111,7 @@ class ExplainEngine:
 
 
 
-        risk = self.risk_message(
+        weaknesses = self.detect_weaknesses(
 
             scores
 
@@ -122,9 +131,9 @@ class ExplainEngine:
 
                 self.summary(
 
-                    signal,
+                    score,
 
-                    score
+                    signal
 
                 ),
 
@@ -141,7 +150,11 @@ class ExplainEngine:
 
             "risk_message":
 
-                risk,
+                self.risk_message(
+
+                    scores
+
+                ),
 
 
             "score":
@@ -157,7 +170,12 @@ class ExplainEngine:
 
             "generated_at":
 
-                datetime.utcnow().isoformat()
+                datetime.utcnow().isoformat(),
+
+
+            "version":
+
+                self.version
 
         }
 
@@ -170,8 +188,8 @@ class ExplainEngine:
 
     def summary(
         self,
-        signal,
-        score
+        score,
+        signal
     ):
 
 
@@ -180,9 +198,9 @@ class ExplainEngine:
 
             return (
 
-                f"AI güçlü pozitif sinyal üretti. "
+                "AI güçlü pozitif sinyal üretiyor. "
 
-                f"Final skor: {score}"
+                f"Final skor: {round(score,2)}"
 
             )
 
@@ -193,9 +211,9 @@ class ExplainEngine:
 
             return (
 
-                f"AI pozitif beklenti oluşturdu. "
+                "AI pozitif fırsat görüyor. "
 
-                f"Final skor: {score}"
+                f"Final skor: {round(score,2)}"
 
             )
 
@@ -206,9 +224,22 @@ class ExplainEngine:
 
             return (
 
-                f"AI negatif görünüm tespit etti. "
+                "AI negatif risk sinyali üretiyor. "
 
-                f"Final skor: {score}"
+                f"Final skor: {round(score,2)}"
+
+            )
+
+
+
+        if signal == "WEAK_SELL":
+
+
+            return (
+
+                "AI zayıf görünüm tespit etti. "
+
+                f"Final skor: {round(score,2)}"
 
             )
 
@@ -216,9 +247,9 @@ class ExplainEngine:
 
         return (
 
-            f"AI kararı nötr bölgede. "
+            "AI kararı nötr bölgede. "
 
-            f"Final skor: {score}"
+            f"Final skor: {round(score,2)}"
 
         )
 
@@ -226,10 +257,10 @@ class ExplainEngine:
 
 
     # =====================================================
-    # STRONG FACTORS
+    # STRENGTH DETECTION
     # =====================================================
 
-    def find_strengths(
+    def detect_strengths(
         self,
         scores
     ):
@@ -239,51 +270,51 @@ class ExplainEngine:
 
 
 
+        if not isinstance(
+
+            scores,
+
+            dict
+
+        ):
+
+
+            return strengths
+
+
+
         for key,value in scores.items():
 
 
-            if float(value) >= 70:
+            try:
 
 
-                strengths.append(
-
-                    {
-
-                        "factor":
-
-                            key,
+                if float(value) >= 70:
 
 
-                        "score":
+                    strengths.append(
 
-                            value
+                        key
 
-                    }
-
-                )
+                    )
 
 
 
-        return sorted(
+            except Exception:
 
-            strengths,
 
-            key=lambda x:
-
-            x["score"],
-
-            reverse=True
-
-        )
+                continue
 
 
 
 
-    # =====================================================
-    # WEAK FACTORS
+        return strengths
+
+        # =====================================================
+    # WEAKNESS DETECTION
     # =====================================================
 
-    def find_weaknesses(
+    def detect_weaknesses(
         self,
         scores
     ):
@@ -293,40 +324,45 @@ class ExplainEngine:
 
 
 
+        if not isinstance(
+
+            scores,
+
+            dict
+
+        ):
+
+
+            return weaknesses
+
+
+
         for key,value in scores.items():
 
 
-            if float(value) <= 40:
+            try:
 
 
-                weaknesses.append(
-
-                    {
-
-                        "factor":
-
-                            key,
+                if float(value) <= 40:
 
 
-                        "score":
+                    weaknesses.append(
 
-                            value
+                        key
 
-                    }
-
-                )
+                    )
 
 
 
-        return sorted(
+            except Exception:
 
-            weaknesses,
 
-            key=lambda x:
+                continue
 
-            x["score"]
 
-        )
+
+
+        return weaknesses
 
 
 
@@ -339,6 +375,23 @@ class ExplainEngine:
         self,
         scores
     ):
+
+
+        if not isinstance(
+
+            scores,
+
+            dict
+
+        ):
+
+
+            return (
+
+                "Risk analizi mevcut değil."
+
+            )
+
 
 
         risk = float(
@@ -355,14 +408,14 @@ class ExplainEngine:
 
 
 
-        if risk >= 70:
+        if risk >= 75:
 
 
             return (
 
                 "Yüksek risk seviyesi. "
 
-                "Pozisyon büyüklüğü azaltılmalı."
+                "Pozisyon büyüklüğü kontrollü tutulmalı."
 
             )
 
@@ -383,7 +436,9 @@ class ExplainEngine:
 
         return (
 
-            "Risk seviyesi düşük."
+            "Düşük risk seviyesi. "
+
+            "Risk koşulları olumlu."
 
         )
 
@@ -391,35 +446,57 @@ class ExplainEngine:
 
 
     # =====================================================
-    # BATCH EXPLANATION
+    # DEFAULT
     # =====================================================
 
-    def explain_market(
-        self,
-        reports
+    def default(
+        self
     ):
 
 
-        results = []
+        return {
 
 
+            "decision":
 
-        for item in reports:
-
-
-            results.append(
-
-                self.explain(
-
-                    item
-
-                )
-
-            )
+                "HOLD",
 
 
+            "summary":
 
-        return results
+                "AI analizi oluşturulamadı.",
+
+
+            "strengths":
+
+                [],
+
+
+            "weaknesses":
+
+                [],
+
+
+            "risk_message":
+
+                "Risk bilgisi yok.",
+
+
+            "score":
+
+                50,
+
+
+            "generated_at":
+
+                datetime.utcnow().isoformat(),
+
+
+            "version":
+
+                self.version
+
+        }
 
 
 
@@ -454,8 +531,10 @@ class ExplainEngine:
 
 
 
+
 __all__ = [
 
     "ExplainEngine"
 
 ]
+    

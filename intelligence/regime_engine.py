@@ -1,32 +1,22 @@
 """
 BIST AI LAB OMEGA
-Regime Engine v0.1
+Regime Engine v2.0 PRO
 
 Market regime intelligence layer.
 
 Responsibilities:
 
-- Detect market conditions
-- Identify bull/bear cycles
-- Measure market strength
-- Detect crisis conditions
-- Guide AI aggressiveness
-
-Regimes:
-
-- BULL
-- RECOVERY
-- NEUTRAL
-- SIDEWAYS
-- BEAR
-- CRISIS
+- Detect market environment
+- Analyze AI score distribution
+- Determine market trend regime
+- Provide macro context
+- Support portfolio decisions
 
 Compatible with:
 
-- Market Brain
-- Decision Brain
-- Portfolio Brain
 - AI Orchestrator
+- Fusion Engine
+- Portfolio Brain
 """
 
 from __future__ import annotations
@@ -34,7 +24,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from typing import Dict, Any, List
+
+from typing import List, Dict, Any
 
 
 
@@ -42,14 +33,12 @@ from typing import Dict, Any, List
 class RegimeEngine:
 
 
-    def __init__(self):
+    def __init__(
+        self
+    ):
 
 
-        self.version = (
-
-            "0.1.0"
-
-        )
+        self.version = "2.0.0"
 
 
 
@@ -60,143 +49,53 @@ class RegimeEngine:
 
     def analyze(
         self,
-        market_data
+        reports
     ):
 
 
-        if not market_data:
+        if not isinstance(
+
+            reports,
+
+            list
+
+        ) or not reports:
 
 
             return self.default()
 
 
 
-        scores = []
 
+        scores = self.extract_scores(
 
-        risks = []
+            reports
 
-
-        signals = []
-
-
-
-        for item in market_data:
-
-
-            if not isinstance(
-
-                item,
-
-                dict
-
-            ):
-
-                continue
+        )
 
 
 
-            score = float(
-
-                item.get(
-
-                    "final_score",
-
-                    item.get(
-
-                        "score",
-
-                        50
-
-                    )
-
-                )
-
-            )
-
-
-            risk = float(
-
-                item.get(
-
-                    "risk",
-
-                    item.get(
-
-                        "risk_score",
-
-                        50
-
-                    )
-
-                )
-
-            )
-
-
-
-            scores.append(
-
-                score
-
-            )
-
-
-            risks.append(
-
-                risk
-
-            )
-
-
-
-            signal = item.get(
-
-                "signal"
-
-            )
-
-
-            if signal:
-
-                signals.append(
-
-                    signal
-
-                )
-
-
-
-
-        avg_score = self.average(
+        average = self.average_score(
 
             scores
 
         )
 
 
-        avg_risk = self.average(
 
-            risks
+        regime = self.detect_regime(
 
-        )
-
-
-        positive_ratio = self.signal_ratio(
-
-            signals
+            average
 
         )
 
 
 
-        regime = self.detect(
+        signals = self.generate_signals(
 
-            avg_score,
+            average,
 
-            avg_risk,
-
-            positive_ratio
+            regime
 
         )
 
@@ -210,44 +109,27 @@ class RegimeEngine:
                 regime,
 
 
-            "market_score":
+            "score":
 
                 round(
 
-                    avg_score,
+                    average,
 
                     2
 
                 ),
 
 
-            "risk_score":
+            "signals":
 
-                round(
-
-                    avg_risk,
-
-                    2
-
-                ),
+                signals,
 
 
-            "positive_signal_ratio":
+            "market_condition":
 
-                round(
+                self.condition(
 
-                    positive_ratio,
-
-                    2
-
-                ),
-
-
-            "description":
-
-                self.description(
-
-                    regime
+                    average
 
                 ),
 
@@ -267,227 +149,312 @@ class RegimeEngine:
 
 
     # =====================================================
-    # REGIME DETECTOR
+    # SCORE EXTRACTION
     # =====================================================
 
-    def detect(
+    def extract_scores(
         self,
-        score,
-        risk,
-        positive_ratio
+        reports
     ):
 
 
-        # Extreme danger
-
-        if risk >= 85:
-
-
-            return "CRISIS"
+        scores = []
 
 
 
-        # Strong market
-
-        if (
-
-            score >= 75
-
-            and
-
-            positive_ratio >= 60
-
-            and
-
-            risk <= 50
-
-        ):
+        for report in reports:
 
 
-            return "BULL"
+            if not isinstance(
+
+                report,
+
+                dict
+
+            ):
+
+
+                continue
 
 
 
-        # Recovery phase
+            score = report.get(
 
-        if (
+                "final_score",
 
-            score >= 60
+                50
 
-            and
-
-            positive_ratio >= 45
-
-        ):
-
-
-            return "RECOVERY"
+            )
 
 
 
-        # Weak market
-
-        if (
-
-            score <= 35
-
-        ):
+            try:
 
 
-            if risk >= 70:
+                scores.append(
 
+                    float(score)
 
-                return "CRISIS"
+                )
 
 
 
-            return "BEAR"
+            except Exception:
+
+
+                continue
 
 
 
 
-        # Sideways
-
-        if (
-
-            45 <= score <= 60
-
-        ):
-
-
-            return "SIDEWAYS"
-
-
-
-        return "NEUTRAL"
+        return scores
 
 
 
 
     # =====================================================
-    # SIGNAL RATIO
+    # AVERAGE SCORE
     # =====================================================
 
-    def signal_ratio(
+    def average_score(
         self,
-        signals
+        scores
     ):
 
 
-        if not signals:
+        if not scores:
 
 
             return 50
 
 
 
-        positive = 0
 
-
-
-        for signal in signals:
-
-
-            if signal in [
-
-
-                "BUY",
-
-                "STRONG_BUY"
-
-            ]:
-
-
-                positive += 1
-
-
-
-        return (
-
-            positive /
-
-            len(signals)
-
-        ) * 100
+        return sum(scores) / len(scores)
 
 
 
 
     # =====================================================
-    # DESCRIPTION
+    # REGIME DETECTION
     # =====================================================
 
-    def description(
+    def detect_regime(
+        self,
+        score
+    ):
+
+
+        if score >= 75:
+
+
+            return "BULL_MARKET"
+
+
+
+        if score >= 60:
+
+
+            return "POSITIVE"
+
+
+
+        if score <= 35:
+
+
+            return "BEAR_MARKET"
+
+
+
+        if score <= 45:
+
+
+            return "NEGATIVE"
+
+
+
+        return "NEUTRAL"
+        # =====================================================
+    # SIGNAL GENERATOR
+    # =====================================================
+
+    def generate_signals(
+        self,
+        score,
+        regime
+    ):
+
+
+        signals = []
+
+
+
+        if regime == "BULL_MARKET":
+
+
+            signals.append(
+
+                "STRONG_BUY_ENVIRONMENT"
+
+            )
+
+
+            signals.append(
+
+                "RISK_APPETITE_HIGH"
+
+            )
+
+
+
+        elif regime == "POSITIVE":
+
+
+            signals.append(
+
+                "SELECTIVE_BUY"
+
+            )
+
+
+
+        elif regime == "BEAR_MARKET":
+
+
+            signals.append(
+
+                "CAPITAL_PROTECTION"
+
+            )
+
+
+            signals.append(
+
+                "HIGH_RISK_ENVIRONMENT"
+
+            )
+
+
+
+        elif regime == "NEGATIVE":
+
+
+            signals.append(
+
+                "DEFENSIVE_MODE"
+
+            )
+
+
+
+        else:
+
+
+            signals.append(
+
+                "WAIT_AND_OBSERVE"
+
+            )
+
+
+
+        return signals
+
+
+
+
+    # =====================================================
+    # MARKET CONDITION
+    # =====================================================
+
+    def condition(
+        self,
+        score
+    ):
+
+
+        if score >= 80:
+
+
+            return "VERY_STRONG"
+
+
+
+        if score >= 65:
+
+
+            return "STRONG"
+
+
+
+        if score >= 50:
+
+
+            return "NORMAL"
+
+
+
+        if score >= 35:
+
+
+            return "WEAK"
+
+
+
+        return "CRITICAL"
+
+
+
+
+    # =====================================================
+    # PORTFOLIO MODE
+    # =====================================================
+
+    def portfolio_mode(
         self,
         regime
     ):
 
 
-        descriptions = {
+        modes = {
 
 
-            "BULL":
+            "BULL_MARKET":
 
-                "Piyasa güçlü pozitif trend bölgesinde.",
-
-
-            "RECOVERY":
-
-                "Piyasa toparlanma sürecinde.",
+                "AGGRESSIVE",
 
 
-            "SIDEWAYS":
+            "POSITIVE":
 
-                "Yatay ve kararsız piyasa koşulu.",
+                "GROWTH",
 
 
             "NEUTRAL":
 
-                "Belirsizlik seviyesi dengeli.",
+                "BALANCED",
 
 
-            "BEAR":
+            "NEGATIVE":
 
-                "Negatif piyasa baskısı mevcut.",
+                "DEFENSIVE",
 
 
-            "CRISIS":
+            "BEAR_MARKET":
 
-                "Yüksek riskli piyasa koşulu."
+                "CAPITAL_PRESERVATION"
+
 
         }
 
 
 
-        return descriptions.get(
+        return modes.get(
 
             regime,
 
-            "Bilinmeyen piyasa durumu."
+            "BALANCED"
 
         )
-
-
-
-
-    # =====================================================
-    # AVERAGE
-    # =====================================================
-
-    def average(
-        self,
-        values
-    ):
-
-
-        if not values:
-
-
-            return 50
-
-
-
-        return sum(values) / len(values)
 
 
 
@@ -509,14 +476,33 @@ class RegimeEngine:
                 "NEUTRAL",
 
 
-            "market_score":
+            "score":
 
                 50,
 
 
-            "risk_score":
+            "signals":
 
-                50
+                [
+
+                    "WAIT_AND_OBSERVE"
+
+                ],
+
+
+            "market_condition":
+
+                "NORMAL",
+
+
+            "generated_at":
+
+                datetime.utcnow().isoformat(),
+
+
+            "version":
+
+                self.version
 
         }
 
@@ -550,6 +536,7 @@ class RegimeEngine:
                 "READY"
 
         }
+
 
 
 

@@ -1,23 +1,22 @@
 """
 BIST AI LAB OMEGA
-Confidence Engine v0.1
+Confidence Engine v2.0 PRO
 
-AI decision reliability layer.
+AI confidence calculation layer.
 
 Responsibilities:
 
 - Measure agent agreement
+- Measure signal consensus
 - Calculate confidence score
-- Detect conflicting intelligence
-- Filter weak signals
-- Decision safety control
+- Detect weak intelligence
+- Prevent fake confidence
 
 Compatible with:
 
 - Fusion Engine
-- Decision Brain
-- Regime Engine
 - AI Orchestrator
+- Dashboard
 """
 
 from __future__ import annotations
@@ -25,7 +24,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from typing import Dict, Any, List
+
+from typing import List, Dict, Any
 
 
 
@@ -33,140 +33,60 @@ from typing import Dict, Any, List
 class ConfidenceEngine:
 
 
-    def __init__(self):
+
+    def __init__(
+        self
+    ):
 
 
-        self.version = (
-
-            "0.1.0"
-
-        )
+        self.version = "2.0.0"
 
 
 
 
     # =====================================================
-    # MAIN CONFIDENCE CALCULATION
+    # MAIN CALCULATION
     # =====================================================
 
     def calculate(
         self,
-        agent_results: List[Dict[str,Any]]
+        agents
     ):
 
 
-        if not agent_results:
+        if not isinstance(
 
+            agents,
 
-            return {
+            list
 
+        ) or not agents:
 
-                "confidence":
 
-                    50,
+            return self.default()
 
 
-                "level":
 
-                    "LOW",
 
+        agreement = self.calculate_agreement(
 
-                "agreement":
-
-                    50
-
-            }
-
-
-
-
-        scores = []
-
-
-        signals = []
-
-
-
-        for agent in agent_results:
-
-
-            if not isinstance(
-
-                agent,
-
-                dict
-
-            ):
-
-                continue
-
-
-
-            score = self.extract_score(
-
-                agent
-
-            )
-
-
-            scores.append(
-
-                score
-
-            )
-
-
-
-            signal = agent.get(
-
-                "signal"
-
-            )
-
-
-
-            if signal:
-
-                signals.append(
-
-                    signal
-
-                )
-
-
-
-
-        if not scores:
-
-
-            return {
-
-
-                "confidence":
-
-                    50,
-
-
-                "level":
-
-                    "LOW"
-
-            }
-
-
-
-
-        agreement = self.agreement(
-
-            scores
+            agents
 
         )
 
 
 
-        signal_consensus = self.signal_consensus(
+        consensus = self.calculate_consensus(
 
-            signals
+            agents
+
+        )
+
+
+
+        data_quality = self.calculate_data_quality(
+
+            agents
 
         )
 
@@ -174,11 +94,15 @@ class ConfidenceEngine:
 
         confidence = (
 
-            agreement * 0.6
+            agreement * 0.40
 
             +
 
-            signal_consensus * 0.4
+            consensus * 0.35
+
+            +
+
+            data_quality * 0.25
 
         )
 
@@ -213,7 +137,18 @@ class ConfidenceEngine:
 
                 round(
 
-                    signal_consensus,
+                    consensus,
+
+                    2
+
+                ),
+
+
+            "data_quality":
+
+                round(
+
+                    data_quality,
 
                     2
 
@@ -244,102 +179,79 @@ class ConfidenceEngine:
 
 
     # =====================================================
-    # SCORE EXTRACTOR
+    # AGREEMENT
     # =====================================================
 
-    def extract_score(
+    def calculate_agreement(
         self,
-        agent
+        agents
     ):
 
 
-        keys = [
-
-
-            "technical_score",
-
-
-            "news_score",
-
-
-            "kap_score",
-
-
-            "macro_score",
-
-
-            "risk_score"
-
-        ]
+        scores = []
 
 
 
-        for key in keys:
+        for agent in agents:
 
 
-            if key in agent:
+            if not isinstance(
+
+                agent,
+
+                dict
+
+            ):
 
 
-                return float(
-
-                    agent[key]
-
-                )
+                continue
 
 
 
-        if "confidence" in agent:
+            value = self.extract_score(
 
-
-            return float(
-
-                agent["confidence"]
+                agent
 
             )
 
 
 
-        return 50
+            scores.append(
 
+                value
 
+            )
 
-
-    # =====================================================
-    # AGREEMENT SCORE
-    # =====================================================
-
-    def agreement(
-        self,
-        scores
-    ):
 
 
         if not scores:
+
 
             return 50
 
 
 
-        highest = max(
 
-            scores
-
-        )
-
-
-        lowest = min(
-
-            scores
-
-        )
+        average = sum(scores) / len(scores)
 
 
 
-        difference = highest - lowest
+        deviation = sum(
+
+            abs(
+
+                x - average
+
+            )
+
+            for x in scores
+
+        ) / len(scores)
 
 
 
-        agreement = 100 - difference
+
+        agreement = 100 - deviation
 
 
 
@@ -356,18 +268,54 @@ class ConfidenceEngine:
             )
 
         )
-
-
-
-
-    # =====================================================
+        # =====================================================
     # SIGNAL CONSENSUS
     # =====================================================
 
-    def signal_consensus(
+    def calculate_consensus(
         self,
-        signals
+        agents
     ):
+
+
+        signals = []
+
+
+
+        for agent in agents:
+
+
+            if not isinstance(
+
+                agent,
+
+                dict
+
+            ):
+
+
+                continue
+
+
+
+            signal = agent.get(
+
+                "signal"
+
+            )
+
+
+
+            if signal:
+
+
+                signals.append(
+
+                    signal
+
+                )
+
+
 
 
         if not signals:
@@ -377,13 +325,12 @@ class ConfidenceEngine:
 
 
 
-        positive = 0
 
+        buy = 0
 
-        negative = 0
+        sell = 0
 
-
-        neutral = 0
+        hold = 0
 
 
 
@@ -392,6 +339,7 @@ class ConfidenceEngine:
 
             if signal in [
 
+
                 "BUY",
 
                 "STRONG_BUY"
@@ -399,54 +347,147 @@ class ConfidenceEngine:
             ]:
 
 
-                positive += 1
+                buy += 1
 
 
 
             elif signal in [
 
+
                 "SELL",
 
-                "STRONG_SELL"
+                "WEAK_SELL"
 
             ]:
 
 
-                negative += 1
+                sell += 1
 
 
 
             else:
 
 
-                neutral += 1
+                hold += 1
 
+
+
+
+        total = len(signals)
+
+
+
+        strongest = max(
+
+            buy,
+
+            sell,
+
+            hold
+
+        )
+
+
+
+        return round(
+
+            (
+
+                strongest /
+
+                total
+
+            )
+
+            *
+
+            100,
+
+            2
+
+        )
+
+
+
+
+    # =====================================================
+    # DATA QUALITY
+    # =====================================================
+
+    def calculate_data_quality(
+        self,
+        agents
+    ):
+
+
+        if not agents:
+
+
+            return 0
+
+
+
+        valid = 0
 
 
 
         total = len(
 
-            signals
+            agents
 
         )
 
 
 
-        dominant = max(
-
-            positive,
-
-            negative,
-
-            neutral
-
-        )
+        for agent in agents:
 
 
+            if not isinstance(
 
-        return (
+                agent,
 
-            dominant /
+                dict
+
+            ):
+
+
+                continue
+
+
+
+            values = list(
+
+                agent.values()
+
+            )
+
+
+
+            if any(
+
+                value not in [
+
+                    None,
+
+                    "",
+
+                    0
+
+                ]
+
+                for value in values
+
+            ):
+
+
+                valid += 1
+
+
+
+
+        quality = (
+
+            valid /
 
             total
 
@@ -454,32 +495,100 @@ class ConfidenceEngine:
 
 
 
+        return round(
+
+            quality,
+
+            2
+
+        )
+
+
+
 
     # =====================================================
-    # CONFIDENCE LEVEL
+    # SCORE EXTRACTION
+    # =====================================================
+
+    def extract_score(
+        self,
+        agent
+    ):
+
+
+        keys = [
+
+
+            "technical_score",
+
+            "prediction_score",
+
+            "news_score",
+
+            "kap_score",
+
+            "risk_score",
+
+            "macro_score"
+
+        ]
+
+
+
+        for key in keys:
+
+
+            if key in agent:
+
+
+                try:
+
+
+                    return float(
+
+                        agent[key]
+
+                    )
+
+
+                except Exception:
+
+
+                    pass
+
+
+
+
+        return 50
+
+
+
+
+    # =====================================================
+    # LEVEL
     # =====================================================
 
     def level(
         self,
-        score
+        confidence
     ):
 
 
-        if score >= 80:
+        if confidence >= 85:
 
 
             return "VERY_HIGH"
 
 
 
-        if score >= 65:
+        if confidence >= 70:
 
 
             return "HIGH"
 
 
 
-        if score >= 45:
+        if confidence >= 50:
 
 
             return "MEDIUM"
@@ -492,45 +601,52 @@ class ConfidenceEngine:
 
 
     # =====================================================
-    # DECISION FILTER
+    # DEFAULT
     # =====================================================
 
-    def can_trade(
-        self,
-        confidence
+    def default(
+        self
     ):
 
 
-        if isinstance(
-
-            confidence,
-
-            dict
-
-        ):
+        return {
 
 
-            value = confidence.get(
+            "confidence":
 
-                "confidence",
-
-                50
-
-            )
+                50,
 
 
-        else:
+            "agreement":
+
+                50,
 
 
-            value = confidence
+            "signal_consensus":
+
+                50,
 
 
+            "data_quality":
 
-        return float(
+                0,
 
-            value
 
-        ) >= 65
+            "level":
+
+                "LOW",
+
+
+            "generated_at":
+
+                datetime.utcnow().isoformat(),
+
+
+            "version":
+
+                self.version
+
+        }
 
 
 
@@ -562,6 +678,7 @@ class ConfidenceEngine:
                 "READY"
 
         }
+
 
 
 

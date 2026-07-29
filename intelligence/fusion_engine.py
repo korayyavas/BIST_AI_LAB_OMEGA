@@ -1,33 +1,37 @@
 """
 BIST AI LAB OMEGA
-Fusion Engine v0.1
+Fusion Engine v2.0 PRO
 
-Multi-agent intelligence fusion layer.
+Advanced intelligence fusion layer.
 
 Responsibilities:
 
-- Combine AI agent outputs
-- Calculate final intelligence score
-- Dynamic agent weighting
-- Generate investment ranking
-- Explain score composition
-- Fusion compatible output
+- Combine all AI agents
+- Normalize scores
+- Apply dynamic weights
+- Generate final AI score
+- Generate trading signal
+- Provide explainable fusion output
 
-Agents:
+Architecture:
 
-- Technical
-- Prediction
-- News
-- KAP
-- Risk
-- Macro
+Technical Agent
+Prediction Agent
+News Agent
+KAP Agent
+Risk Agent
+Macro Agent
 
-Compatible with:
+        |
+        ↓
 
-- AI Orchestrator
-- Confidence Engine
-- Decision Brain
-- Portfolio Brain
+Fusion Engine
+
+        |
+        ↓
+
+Final Intelligence Score
+Decision Signal
 """
 
 from __future__ import annotations
@@ -35,8 +39,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from typing import Dict, Any, List
 
+from typing import Dict, Any, List
 
 
 
@@ -44,12 +48,15 @@ class FusionEngine:
 
 
     def __init__(
-        self,
-        weights=None
+        self
     ):
 
 
-        self.weights = weights or {
+        self.version = "2.0.0"
+
+
+
+        self.weights = {
 
 
             "technical_score":
@@ -69,27 +76,19 @@ class FusionEngine:
 
             "kap_score":
 
-                0.15,
-
-
-            "risk_score":
-
                 0.10,
 
 
             "macro_score":
 
+                0.15,
+
+
+            "risk_score":
+
                 0.10
 
-
         }
-
-
-        self.version = (
-
-            "0.1.0"
-
-        )
 
 
 
@@ -101,251 +100,37 @@ class FusionEngine:
     def fuse(
         self,
         symbol,
-        agent_results: List[Dict[str,Any]]
+        agents
     ):
 
 
-        combined = {
+        scores = self.extract_scores(
 
+            agents
 
-            "technical_score":
+        )
 
-                50,
 
 
-            "prediction_score":
+        normalized = self.normalize_scores(
 
-                50,
+            scores
 
+        )
 
-            "news_score":
 
-                50,
 
+        final_score = self.calculate_final_score(
 
-            "kap_score":
+            normalized
 
-                50,
+        )
 
 
-            "risk_score":
 
-                50,
+        signal = self.generate_signal(
 
-
-            "macro_score":
-
-                50
-
-        }
-
-
-
-        explanations = []
-
-
-
-        for result in agent_results:
-
-
-            if not isinstance(
-
-                result,
-
-                dict
-
-            ):
-
-                continue
-
-
-
-            agent = result.get(
-
-                "agent"
-
-            )
-
-
-
-            # Technical
-
-            if agent == "Technical Agent":
-
-
-                combined["technical_score"] = (
-
-                    result.get(
-
-                        "technical_score",
-
-                        50
-
-                    )
-
-                )
-
-
-                explanations.append(
-
-                    "Teknik analiz katkısı"
-
-                )
-
-
-
-            # Prediction
-
-            elif agent == "Prediction Agent":
-
-
-                prediction = float(
-
-                    result.get(
-
-                        "prediction",
-
-                        0
-
-                    )
-
-                )
-
-
-                combined["prediction_score"] = self.prediction_score(
-
-                    prediction
-
-                )
-
-
-                explanations.append(
-
-                    "AI model tahmini"
-
-                )
-
-
-
-            # News
-
-            elif agent == "News Agent":
-
-
-                combined["news_score"] = (
-
-                    result.get(
-
-                        "news_score",
-
-                        50
-
-                    )
-
-                )
-
-
-
-                explanations.append(
-
-                    "Haber duyarlılığı"
-
-                )
-
-
-
-            # KAP
-
-            elif agent == "KAP Agent":
-
-
-                combined["kap_score"] = (
-
-                    result.get(
-
-                        "kap_score",
-
-                        50
-
-                    )
-
-                )
-
-
-
-                explanations.append(
-
-                    "Kurumsal gelişmeler"
-
-                )
-
-
-
-            # Risk
-
-            elif agent == "Risk Agent":
-
-
-                risk = float(
-
-                    result.get(
-
-                        "risk_score",
-
-                        50
-
-                    )
-
-                )
-
-
-                combined["risk_score"] = (
-
-                    100 -
-
-                    risk
-
-                )
-
-
-                explanations.append(
-
-                    "Risk düzenlemesi"
-
-                )
-
-
-
-            # Macro
-
-            elif agent == "Macro Agent":
-
-
-                combined["macro_score"] = (
-
-                    result.get(
-
-                        "macro_score",
-
-                        50
-
-                    )
-
-                )
-
-
-                explanations.append(
-
-                    "Makro ortam"
-
-                )
-
-
-
-
-        final_score = self.calculate(
-
-            combined
+            final_score
 
         )
 
@@ -356,17 +141,12 @@ class FusionEngine:
 
             "symbol":
 
-                symbol,
-
-
-            "agents":
-
-                agent_results,
+                symbol.upper(),
 
 
             "scores":
 
-                combined,
+                normalized,
 
 
             "final_score":
@@ -380,27 +160,14 @@ class FusionEngine:
                 ),
 
 
-            "confidence":
-
-                self.confidence(
-
-                    combined
-
-                ),
-
-
-            "explanation":
-
-                explanations,
-
-
             "signal":
 
-                self.signal(
+                signal,
 
-                    final_score
 
-                ),
+            "agents":
+
+                agents,
 
 
             "generated_at":
@@ -418,10 +185,143 @@ class FusionEngine:
 
 
     # =====================================================
-    # SCORE CALCULATION
+    # SCORE EXTRACTION
     # =====================================================
 
-    def calculate(
+    def extract_scores(
+        self,
+        agents
+    ):
+
+
+        result = {
+
+
+
+            "technical_score":
+
+                50,
+
+
+            "prediction_score":
+
+                50,
+
+
+            "news_score":
+
+                50,
+
+
+            "kap_score":
+
+                50,
+
+
+            "macro_score":
+
+                50,
+
+
+            "risk_score":
+
+                50
+
+
+        }
+
+
+
+        for agent in agents:
+
+
+            if not isinstance(
+
+                agent,
+
+                dict
+
+            ):
+
+
+                continue
+
+
+
+            for key in result:
+
+
+                if key in agent:
+
+
+                    result[key] = agent[key]
+
+
+
+        return result
+
+        # =====================================================
+    # NORMALIZE SCORES
+    # =====================================================
+
+    def normalize_scores(
+        self,
+        scores
+    ):
+
+
+        normalized = {}
+
+
+
+        for key,value in scores.items():
+
+
+            try:
+
+
+                normalized[key] = round(
+
+
+                    max(
+
+                        0,
+
+                        min(
+
+                            100,
+
+                            float(value)
+
+                        )
+
+                    ),
+
+
+                    2
+
+                )
+
+
+
+            except Exception:
+
+
+                normalized[key] = 50
+
+
+
+
+        return normalized
+
+
+
+
+    # =====================================================
+    # FINAL SCORE CALCULATION
+    # =====================================================
+
+    def calculate_final_score(
         self,
         scores
     ):
@@ -431,61 +331,83 @@ class FusionEngine:
 
 
 
+        weight_sum = 0
+
+
+
         for key,weight in self.weights.items():
+
+
+            value = scores.get(
+
+                key,
+
+                50
+
+            )
+
 
 
             total += (
 
-                scores.get(
 
-                    key,
-
-                    50
-
-                )
+                float(value)
 
                 *
 
                 weight
 
-            )
-
-
-
-        return max(
-
-            0,
-
-            min(
-
-                100,
-
-                total
 
             )
+
+
+
+            weight_sum += weight
+
+
+
+
+        if weight_sum == 0:
+
+
+            return 50
+
+
+
+
+        score = total / weight_sum
+
+
+
+
+        # =============================================
+        # RISK ADJUSTMENT
+        # =============================================
+
+
+        risk = scores.get(
+
+            "risk_score",
+
+            50
 
         )
 
 
 
-
-    # =====================================================
-    # PREDICTION SCORE
-    # =====================================================
-
-    def prediction_score(
-        self,
-        prediction
-    ):
+        if risk > 70:
 
 
-        score = 50 + (
+            score -= 10
 
-            prediction *
 
-            5
 
-        )
+
+        elif risk < 30:
+
+
+            score += 5
+
 
 
 
@@ -507,58 +429,10 @@ class FusionEngine:
 
 
     # =====================================================
-    # CONFIDENCE
+    # SIGNAL GENERATOR
     # =====================================================
 
-    def confidence(
-        self,
-        scores
-    ):
-
-
-        values = list(
-
-            scores.values()
-
-        )
-
-
-        deviation = max(values) - min(values)
-
-
-
-        confidence = 100 - deviation
-
-
-
-        return round(
-
-            max(
-
-                0,
-
-                min(
-
-                    100,
-
-                    confidence
-
-                )
-
-            ),
-
-            2
-
-        )
-
-
-
-
-    # =====================================================
-    # SIGNAL
-    # =====================================================
-
-    def signal(
+    def generate_signal(
         self,
         score
     ):
@@ -566,54 +440,229 @@ class FusionEngine:
 
         if score >= 85:
 
+
             return "STRONG_BUY"
 
 
 
         if score >= 70:
 
+
             return "BUY"
 
 
 
-        if score <= 35:
-
-            return "SELL"
+        if score >= 55:
 
 
+            return "HOLD"
 
-        return "HOLD"
+
+
+        if score >= 40:
+
+
+            return "WEAK_SELL"
+
+
+
+        return "SELL"
 
 
 
 
     # =====================================================
-    # MARKET FUSION
+    # TOP LEVEL RANKING
     # =====================================================
 
     def rank(
         self,
-        reports
+        reports,
+        limit=10
     ):
 
 
-        return sorted(
+        if not isinstance(
+
+            reports,
+
+            list
+
+        ):
+
+
+            return []
+
+
+
+        sorted_reports = sorted(
 
             reports,
 
             key=lambda x:
 
-            x.get(
+                x.get(
 
-                "final_score",
+                    "final_score",
 
-                0
+                    0
 
-            ),
+                ),
 
             reverse=True
 
         )
+
+
+
+        return sorted_reports[:limit]
+
+        # =====================================================
+    # BATCH FUSION
+    # =====================================================
+
+    def batch_fuse(
+        self,
+        reports
+    ):
+
+
+        results = []
+
+
+
+        if not isinstance(
+
+            reports,
+
+            list
+
+        ):
+
+
+            return results
+
+
+
+
+        for item in reports:
+
+
+            if not isinstance(
+
+                item,
+
+                dict
+
+            ):
+
+
+                continue
+
+
+
+            symbol = item.get(
+
+                "symbol",
+
+                ""
+
+            )
+
+
+            agents = item.get(
+
+                "agents",
+
+                []
+
+            )
+
+
+
+            results.append(
+
+                self.fuse(
+
+                    symbol,
+
+                    agents
+
+                )
+
+            )
+
+
+
+        return self.rank(
+
+            results
+
+        )
+
+
+
+
+    # =====================================================
+    # EXPLANATION DATA
+    # =====================================================
+
+    def explain_fusion(
+        self,
+        scores
+    ):
+
+
+        strengths = []
+
+
+        weaknesses = []
+
+
+
+        for key,value in scores.items():
+
+
+            if value >= 70:
+
+
+                strengths.append(
+
+                    key
+
+                )
+
+
+
+            elif value <= 40:
+
+
+                weaknesses.append(
+
+                    key
+
+                )
+
+
+
+        return {
+
+
+            "strengths":
+
+                strengths,
+
+
+            "weaknesses":
+
+                weaknesses,
+
+
+            "generated_at":
+
+                datetime.utcnow().isoformat()
+
+        }
 
 
 
@@ -640,11 +689,17 @@ class FusionEngine:
                 self.version,
 
 
+            "weights":
+
+                self.weights,
+
+
             "status":
 
                 "READY"
 
         }
+
 
 
 

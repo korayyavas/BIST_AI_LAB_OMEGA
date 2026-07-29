@@ -1,8 +1,19 @@
 """
 BIST AI LAB OMEGA
-Omega Container v1.2 PRO
+Omega Container v1.4 PRO
 
-Regime Engine integrated.
+Production dependency injection.
+
+Integrated:
+
+- Data Layer
+- Agents
+- Fusion Engine v2
+- Confidence Engine v2
+- Explain Engine v2
+- Regime Engine v2
+- AI Orchestrator
+
 """
 
 from __future__ import annotations
@@ -13,12 +24,16 @@ import logging
 
 
 from data.multi_symbol_downloader import (
+
     MultiSymbolDownloader
+
 )
 
 
 from data.multi_symbol_feature_pipeline import (
+
     MultiSymbolFeaturePipeline
+
 )
 
 
@@ -27,6 +42,7 @@ from core.data_bridge import DataBridge
 
 
 from core.ai_orchestrator import AIOrchestrator
+
 
 
 
@@ -48,6 +64,7 @@ from agents import (
 
 
 
+
 from intelligence import (
 
     FusionEngine,
@@ -62,6 +79,7 @@ from intelligence import (
 
 
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -71,10 +89,16 @@ class OmegaContainer:
 
 
 
-    def __init__(self):
+    def __init__(
+        self
+    ):
 
 
-        self.version = "1.2.0"
+        self.version = (
+
+            "1.4.0"
+
+        )
 
 
         self.services = {}
@@ -89,19 +113,21 @@ class OmegaContainer:
     # INITIALIZE
     # =====================================================
 
-    def initialize(self):
+    def initialize(
+        self
+    ):
 
 
         self.create_data_layer()
 
 
-        self.create_intelligence()
+        self.create_intelligence_layer()
 
 
         self.create_agents()
 
 
-        self.create_brain()
+        self.create_orchestrator()
 
 
 
@@ -110,7 +136,9 @@ class OmegaContainer:
     # DATA LAYER
     # =====================================================
 
-    def create_data_layer(self):
+    def create_data_layer(
+        self
+    ):
 
 
         downloader = MultiSymbolDownloader(
@@ -122,18 +150,13 @@ class OmegaContainer:
         )
 
 
+
         feature_pipeline = MultiSymbolFeaturePipeline()
 
 
 
-        self.services["downloader"] = downloader
 
-
-        self.services["feature_pipeline"] = feature_pipeline
-
-
-
-        self.services["data_bridge"] = DataBridge(
+        bridge = DataBridge(
 
             downloader=downloader,
 
@@ -143,48 +166,64 @@ class OmegaContainer:
 
 
 
-
-    # =====================================================
-    # INTELLIGENCE
-    # =====================================================
-
-    def create_intelligence(self):
+        self.services["downloader"] = downloader
 
 
-        self.services["fusion"] = FusionEngine()
+        self.services["feature_pipeline"] = feature_pipeline
 
 
-        self.services["confidence"] = ConfidenceEngine()
-
-
-        self.services["explain"] = ExplainEngine()
-
-
-        self.services["regime"] = RegimeEngine()
+        self.services["data_bridge"] = bridge
 
 
 
 
     # =====================================================
-    # AGENTS
+    # INTELLIGENCE LAYER
     # =====================================================
 
-    def create_agents(self):
+    def create_intelligence_layer(
+        self
+    ):
+
+
+        self.services["fusion_engine"] = FusionEngine()
+
+
+        self.services["confidence_engine"] = ConfidenceEngine()
+
+
+        self.services["explain_engine"] = ExplainEngine()
+
+
+        self.services["regime_engine"] = RegimeEngine()
+
+            # =====================================================
+    # AGENT LAYER
+    # =====================================================
+
+    def create_agents(
+        self
+    ):
 
 
         self.services["technical_agent"] = TechnicalAgent()
 
 
+
         self.services["prediction_agent"] = PredictionAgent()
+
 
 
         self.services["news_agent"] = NewsAgent()
 
 
+
         self.services["kap_agent"] = KAPAgent()
 
 
+
         self.services["risk_agent"] = RiskAgent()
+
 
 
         self.services["macro_agent"] = MacroAgent()
@@ -193,10 +232,12 @@ class OmegaContainer:
 
 
     # =====================================================
-    # BRAIN
+    # ORCHESTRATOR
     # =====================================================
 
-    def create_brain(self):
+    def create_orchestrator(
+        self
+    ):
 
 
         self.services["orchestrator"] = AIOrchestrator(
@@ -207,9 +248,11 @@ class OmegaContainer:
                 self.services["technical_agent"],
 
 
+
             prediction_agent=
 
                 self.services["prediction_agent"],
+
 
 
             news_agent=
@@ -217,14 +260,17 @@ class OmegaContainer:
                 self.services["news_agent"],
 
 
+
             kap_agent=
 
                 self.services["kap_agent"],
 
 
+
             risk_agent=
 
                 self.services["risk_agent"],
+
 
 
             macro_agent=
@@ -233,27 +279,28 @@ class OmegaContainer:
 
 
 
+
             fusion_engine=
 
-                self.services["fusion"],
+                self.services["fusion_engine"],
 
 
 
             confidence_engine=
 
-                self.services["confidence"],
+                self.services["confidence_engine"],
 
 
 
             explain_engine=
 
-                self.services["explain"],
+                self.services["explain_engine"],
 
 
 
             regime_engine=
 
-                self.services["regime"]
+                self.services["regime_engine"]
 
         )
 
@@ -261,7 +308,7 @@ class OmegaContainer:
 
 
     # =====================================================
-    # ACCESS
+    # SERVICE ACCESS
     # =====================================================
 
     def get(
@@ -280,7 +327,7 @@ class OmegaContainer:
 
 
     # =====================================================
-    # ANALYSIS
+    # SINGLE ANALYSIS
     # =====================================================
 
     def analyze(
@@ -289,7 +336,12 @@ class OmegaContainer:
     ):
 
 
-        bridge = self.services["data_bridge"]
+        bridge = self.services.get(
+
+            "data_bridge"
+
+        )
+
 
 
         data = bridge.create_features(
@@ -312,7 +364,7 @@ class OmegaContainer:
 
 
     # =====================================================
-    # MARKET
+    # MARKET ANALYSIS
     # =====================================================
 
     def analyze_market(
@@ -321,7 +373,12 @@ class OmegaContainer:
     ):
 
 
-        bridge = self.services["data_bridge"]
+        bridge = self.services.get(
+
+            "data_bridge"
+
+        )
+
 
 
         market_data = bridge.fetch_market(

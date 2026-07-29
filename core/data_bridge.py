@@ -1,38 +1,30 @@
 """
 BIST AI LAB OMEGA
-Data Bridge v1.0 PRO
+Data Bridge v1.3 PRO
 
-Central data communication layer.
+Unified data communication layer.
 
 Responsibilities:
 
-- Connect market data sources
-- Normalize symbol data
-- Feed feature pipeline
-- Feed AI agents
-- Feed prediction engine
-- Cache market data
-- Provide unified interface
+- Connect downloader
+- Connect feature pipeline
+- Create model ready data
+- Normalize market data flow
+- Provide safe fallback
 
 Architecture:
 
-DATA SOURCE
+Downloader
     |
     ↓
-DATA BRIDGE
+Data Bridge
     |
-    ├── Feature Engine
-    ├── Prediction Agent
-    ├── Technical Agent
-    ├── Risk Agent
-    └── AI Orchestrator
+    ↓
+Feature Pipeline
+    |
+    ↓
+AI Agents
 
-Compatible with:
-
-- MultiSymbolDownloader
-- MultiSymbolFeaturePipeline
-- AIOrchestrator
-- Dashboard API
 """
 
 from __future__ import annotations
@@ -40,10 +32,8 @@ from __future__ import annotations
 
 import logging
 
-from datetime import datetime, timedelta
 
-
-from typing import Dict, Any, Optional, List
+from datetime import datetime
 
 
 
@@ -55,6 +45,7 @@ logger = logging.getLogger(__name__)
 class DataBridge:
 
 
+
     def __init__(
         self,
         downloader=None,
@@ -64,161 +55,18 @@ class DataBridge:
 
         self.downloader = downloader
 
+
         self.feature_pipeline = feature_pipeline
 
 
-        self.cache = {}
 
-
-        self.cache_time = {}
-
-
-        self.cache_duration = timedelta(
-
-            minutes=15
-
-        )
-
-
-        self.version = (
-
-            "1.0.0"
-
-        )
+        self.version = "1.3.0"
 
 
 
 
     # =====================================================
-    # SYMBOL NORMALIZE
-    # =====================================================
-
-    def normalize_symbol(
-        self,
-        symbol
-    ):
-
-
-        return str(
-
-            symbol
-
-        ).upper().replace(
-
-            ".IS",
-
-            ""
-
-        )
-
-
-
-
-    # =====================================================
-    # FETCH SINGLE
-    # =====================================================
-
-    def fetch_symbol(
-        self,
-        symbol
-    ):
-
-
-        symbol = self.normalize_symbol(
-
-            symbol
-
-        )
-
-
-
-        cached = self.get_cache(
-
-            symbol
-
-        )
-
-
-        if cached:
-
-
-            return cached
-
-
-
-
-        try:
-
-
-            if self.downloader:
-
-
-                data = self.downloader.download_all(
-
-                    [
-
-                        symbol
-
-                    ]
-
-                )
-
-
-
-                if isinstance(
-
-                    data,
-
-                    dict
-
-                ):
-
-
-                    result = data.get(
-
-                        symbol
-
-                    )
-
-
-
-                    if result is not None:
-
-
-                        self.set_cache(
-
-                            symbol,
-
-                            result
-
-                        )
-
-
-                        return result
-
-
-
-
-        except Exception:
-
-
-            logger.exception(
-
-                "Data fetch failed %s",
-
-                symbol
-
-            )
-
-
-
-        return None
-
-
-
-
-    # =====================================================
-    # FEATURE GENERATION
+    # SINGLE SYMBOL FEATURE CREATION
     # =====================================================
 
     def create_features(
@@ -227,47 +75,38 @@ class DataBridge:
     ):
 
 
-        raw = self.fetch_symbol(
-
-            symbol
-
-        )
-
-
-
-        if raw is None:
-
-
-            return None
-
-
-
-
         try:
+
+
+            raw = self.download_symbol(
+
+                symbol
+
+            )
+
+
+
+            if raw is None:
+
+
+                return None
+
+
 
 
             if self.feature_pipeline:
 
 
-                result = self.feature_pipeline.process_all(
+                return self.feature_pipeline.process(
 
-                    {
-
-                        symbol:
-
-                            raw
-
-                    }
+                    raw
 
                 )
 
 
 
-                return result.get(
+            return raw
 
-                    symbol
-
-                )
 
 
 
@@ -283,40 +122,71 @@ class DataBridge:
             )
 
 
-
-        return raw
+            return None
 
 
 
 
     # =====================================================
-    # BATCH DATA
+    # DOWNLOAD SINGLE SYMBOL
     # =====================================================
 
-    def fetch_market(
+    def download_symbol(
         self,
-        symbols: List[str]
+        symbol
     ):
 
 
-        normalized = [
-
-            self.normalize_symbol(x)
-
-            for x in symbols
-
-        ]
+        try:
 
 
+            if self.downloader is None:
 
-        result = {}
+
+                return None
 
 
 
-        for symbol in normalized:
+            if hasattr(
+
+                self.downloader,
+
+                "download"
+
+            ):
 
 
-            result[symbol] = self.create_features(
+                return self.downloader.download(
+
+                    symbol
+
+                )
+
+
+
+            if hasattr(
+
+                self.downloader,
+
+                "download_symbol"
+
+            ):
+
+
+                return self.downloader.download_symbol(
+
+                    symbol
+
+                )
+
+
+
+        except Exception:
+
+
+            logger.exception(
+
+                "Download failed %s",
 
                 symbol
 
@@ -324,4 +194,244 @@ class DataBridge:
 
 
 
+        return None
+
+
+
+
+    # =====================================================
+    # MARKET DOWNLOAD
+    # =====================================================
+
+    def fetch_market(
+        self,
+        symbols
+    ):
+
+
+        result = {}
+
+
+
+        if not symbols:
+
+
+            return result
+
+
+
+        for symbol in symbols:
+
+
+            try:
+
+
+                result[symbol] = self.create_features(
+
+                    symbol
+
+                )
+
+
+
+            except Exception:
+
+
+                result[symbol] = None
+
+
+
         return result
+
+        # =====================================================
+    # BATCH FEATURE PROCESSING
+    # =====================================================
+
+    def create_batch_features(
+        self,
+        symbols
+    ):
+
+
+        results = {}
+
+
+
+        if not symbols:
+
+
+            return results
+
+
+
+
+        for symbol in symbols:
+
+
+            try:
+
+
+                results[symbol] = self.create_features(
+
+                    symbol
+
+                )
+
+
+
+            except Exception:
+
+
+                results[symbol] = None
+
+
+
+        return results
+
+
+
+
+    # =====================================================
+    # DATA NORMALIZATION
+    # =====================================================
+
+    def normalize_market_data(
+        self,
+        data
+    ):
+
+
+        if data is None:
+
+
+            return None
+
+
+
+        try:
+
+
+            if hasattr(
+
+                data,
+
+                "copy"
+
+            ):
+
+
+                return data.copy()
+
+
+
+            if isinstance(
+
+                data,
+
+                dict
+
+            ):
+
+
+                return dict(
+
+                    data
+
+                )
+
+
+
+        except Exception:
+
+
+            pass
+
+
+
+        return data
+
+
+
+
+    # =====================================================
+    # DATA STATUS
+    # =====================================================
+
+    def status(
+        self
+    ):
+
+
+        return {
+
+
+            "service":
+
+                "OMEGA Data Bridge",
+
+
+            "version":
+
+                self.version,
+
+
+            "downloader":
+
+                self.downloader is not None,
+
+
+            "feature_pipeline":
+
+                self.feature_pipeline is not None,
+
+
+            "status":
+
+                "READY"
+
+        }
+
+
+
+
+    # =====================================================
+    # HEALTH
+    # =====================================================
+
+    def health(
+        self
+    ):
+
+
+        return {
+
+
+            "service":
+
+                "OMEGA Data Bridge",
+
+
+            "version":
+
+                self.version,
+
+
+            "status":
+
+                "READY",
+
+
+            "timestamp":
+
+                datetime.utcnow().isoformat()
+
+        }
+
+
+
+
+__all__ = [
+
+    "DataBridge"
+
+]
